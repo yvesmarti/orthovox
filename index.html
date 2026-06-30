@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORTHOVOX — Écoute. Épelle. Sans filet.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Space+Mono:wght@400;700&family=Spectral:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --encre:#1c1a17;
+  --papier:#f6f1e4;
+  --papier2:#ece4cf;
+  --rouge:#b3432b;
+  --rouge-vif:#d4502f;
+  --vert:#3a5a40;
+  --or:#c9941f;
+  --gris:#73685a;
+  --ligne:#d8cbac;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Spectral',serif;
+  background:var(--papier);
+  color:var(--encre);
+  line-height:1.6;
+  min-height:100vh;
+}
+.mono{font-family:'Space Mono',monospace}
+h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:600;line-height:1.05}
+.wrap{max-width:980px;margin:0 auto;padding:0 24px}
+
+/* texture papier subtile */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:radial-gradient(circle,rgba(0,0,0,.035) 1px,transparent 1.4px);
+  background-size:5px 5px;
+}
+
+header{position:relative;z-index:5;padding:28px 0 0}
+.masthead{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  border-bottom:3px solid var(--encre);padding-bottom:16px;
+  flex-wrap:wrap;gap:14px;
+}
+.masthead .left small{
+  font-family:'Space Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris);
+}
+.masthead h1{font-size:clamp(34px,6vw,52px);letter-spacing:-.01em}
+.masthead h1 .x{color:var(--rouge)}
+.masthead .right{text-align:right;font-family:'Space Mono';font-size:12px;color:var(--gris)}
+.masthead .right .date{display:block;color:var(--encre);font-weight:700;text-transform:capitalize}
+
+/* nav onglets */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--ligne);margin-top:18px}
+.tab{
+  font-family:'Space Mono';font-size:13px;letter-spacing:.06em;text-transform:uppercase;
+  padding:13px 22px;background:none;border:none;cursor:pointer;color:var(--gris);
+  border-bottom:3px solid transparent;margin-bottom:-1px;font-weight:700;transition:color .15s,border-color .15s;
+}
+.tab.active{color:var(--rouge);border-color:var(--rouge)}
+.tab:hover:not(.active){color:var(--encre)}
+
+main{position:relative;z-index:1;padding:48px 0 90px}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ===== Carte de jeu ===== */
+.game-card{
+  background:var(--papier);border:2px solid var(--encre);border-radius:2px;
+  padding:48px 40px;text-align:center;position:relative;
+  box-shadow:7px 7px 0 var(--ligne);
+}
+.mode-label{
+  display:inline-block;font-family:'Space Mono';font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  background:var(--encre);color:var(--papier);padding:5px 14px;margin-bottom:28px;
+}
+.mode-label.arcade{background:var(--rouge)}
+
+.diff-row{display:flex;justify-content:center;gap:10px;margin-bottom:30px;flex-wrap:wrap}
+.diff-btn{
+  font-family:'Space Mono';font-size:12px;letter-spacing:.05em;text-transform:uppercase;
+  padding:8px 16px;border:1.5px solid var(--encre);background:none;cursor:pointer;border-radius:30px;
+  color:var(--encre);transition:.15s;
+}
+.diff-btn.active{background:var(--encre);color:var(--papier)}
+.diff-btn:disabled{opacity:.35;cursor:default}
+
+.speaker-zone{margin:18px 0 36px}
+.speaker-btn{
+  width:108px;height:108px;border-radius:50%;border:3px solid var(--encre);background:var(--papier2);
+  cursor:pointer;display:inline-grid;place-items:center;font-size:42px;position:relative;
+  transition:transform .15s,background .15s;
+}
+.speaker-btn:hover{background:var(--or);transform:scale(1.04)}
+.speaker-btn:active{transform:scale(.96)}
+.speaker-btn.speaking{animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,80,47,.35)}50%{box-shadow:0 0 0 16px rgba(212,80,47,0)}}
+.speaker-hint{font-family:'Space Mono';font-size:12px;color:var(--gris);margin-top:14px;letter-spacing:.04em}
+.replay-row{display:flex;justify-content:center;gap:10px;margin-top:10px}
+.mini-btn{
+  font-family:'Space Mono';font-size:11px;letter-spacing:.04em;background:none;border:1px solid var(--ligne);
+  color:var(--gris);padding:6px 12px;border-radius:20px;cursor:pointer;
+}
+.mini-btn:hover{border-color:var(--encre);color:var(--encre)}
+
+.input-row{display:flex;gap:10px;max-width:420px;margin:0 auto 18px}
+.spell-input{
+  flex:1;font-family:'Space Mono';font-size:20px;letter-spacing:.08em;text-align:center;
+  padding:14px 16px;border:2px solid var(--encre);background:#fff;color:var(--encre);
+  text-transform:lowercase;border-radius:2px;
+}
+.spell-input:focus{outline:3px solid var(--or);outline-offset:1px}
+.spell-input.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+.submit-btn{
+  font-family:'Space Mono';font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:14px;
+  background:var(--rouge);color:#fff;border:2px solid var(--encre);padding:0 22px;cursor:pointer;border-radius:2px;
+  transition:background .15s;
+}
+.submit-btn:hover{background:var(--rouge-vif)}
+.submit-btn:disabled{opacity:.4;cursor:default}
+
+.feedback{min-height:30px;font-family:'Space Mono';font-size:13px;letter-spacing:.03em;margin-bottom:6px}
+.feedback.ok{color:var(--vert)}
+.feedback.ko{color:var(--rouge)}
+
+.progress-row{display:flex;justify-content:center;gap:7px;margin-top:30px}
+.pip{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--encre);background:none}
+.pip.done{background:var(--vert);border-color:var(--vert)}
+.pip.miss{background:var(--rouge);border-color:var(--rouge)}
+.pip.now{background:var(--or);border-color:var(--or)}
+
+/* ===== Arcade : interface plein écran, thème sombre ===== */
+body{overflow-x:hidden}
+.arcade-shell{
+  position:relative;left:50%;margin-left:-50vw;width:100vw;
+  background:#14141a;color:#eceaf5;padding:30px 20px 130px;
+}
+.arcade-topbar{
+  max-width:720px;margin:0 auto 40px;display:flex;justify-content:space-between;align-items:flex-start;
+  font-family:'Space Mono';padding:0 4px;
+}
+.arcade-lives{font-size:20px;letter-spacing:5px}
+.arcade-life.lost{opacity:.2;filter:grayscale(1)}
+.arcade-levelinfo{text-align:center}
+.arcade-lvl-label{display:block;font-size:13px;letter-spacing:.08em;color:#9b8cf5;font-weight:700;text-transform:uppercase}
+.arcade-lvl-progress{display:block;font-size:11px;color:#7a7686;margin-top:4px}
+.arcade-score{font-size:13px;color:#7a7686;text-align:right}
+.arcade-score b{font-family:'Fraunces';font-size:21px;color:#fff;font-weight:600}
+
+.arcade-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px}
+.arcade-intro,.arcade-levelup{max-width:440px;margin:30px auto;text-align:center}
+.arcade-intro h2,.arcade-levelup h2{font-size:28px;color:#fff;margin-bottom:14px}
+.arcade-intro p,.arcade-levelup p{color:#a9a4ba;margin-bottom:24px;font-size:15.5px}
+.arcade-start-btn{
+  font-family:'Space Mono';font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:14px;
+  background:#5b4fe0;color:#fff;border:none;padding:16px 34px;cursor:pointer;border-radius:8px;transition:background .15s;
+}
+.arcade-start-btn:hover{background:#6f63f0}
+.arcade-best{font-family:'Space Mono';font-size:12px;color:#7a7686;margin-top:20px}
+.arcade-best b{color:#eceaf5}
+
+.arcade-card{
+  width:100%;max-width:560px;margin:0 auto;background:#1d1d27;border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:34px 36px;box-shadow:0 24px 60px rgba(0,0,0,.4);
+}
+.arcade-timerbar{width:100%;height:5px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:24px}
+.arcade-timerfill{height:100%;width:100%;background:#5b4fe0;border-radius:4px;transition:width .1s linear,background .3s}
+.arcade-timerfill.low{background:#d4502f}
+.arcade-def{font-size:19px;color:#f1eff8;line-height:1.55;margin-bottom:28px;min-height:60px}
+.arcade-card-foot{display:flex;justify-content:space-between;align-items:center;font-family:'Space Mono';font-size:13px;color:#8b86a0}
+.arcade-seconds{font-weight:700;color:#cfcae0}
+.arcade-seconds.low{color:#ef7a5c}
+.arcade-replay{background:none;border:1px solid rgba(255,255,255,.14);color:#9b8cf5;font-family:'Space Mono';font-size:12.5px;cursor:pointer;letter-spacing:.03em;padding:6px 14px;border-radius:20px}
+.arcade-replay:hover{border-color:#9b8cf5;color:#c2b8ff}
+.arcade-card.flash-ok{animation:flashOk .4s}
+.arcade-card.flash-ko{animation:flashKo .4s}
+@keyframes flashOk{30%{box-shadow:0 0 0 6px rgba(82,196,120,.25)}}
+@keyframes flashKo{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+.arcade-shell .end-stats .n{color:#9b8cf5}
+.arcade-shell .end-stats .l{color:#8b86a0}
+
+.arcade-inputbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  background:#14141a;border-top:1px solid rgba(255,255,255,.08);
+}
+.arcade-inputbar input{
+  width:calc(100% - 40px);max-width:680px;margin:14px auto 12px;display:block;
+  font-family:'Space Mono';font-size:17px;letter-spacing:.05em;text-align:center;
+  background:#1d1d27;border:1.5px solid rgba(255,255,255,.12);color:#fff;
+  padding:14px 18px;border-radius:8px;text-transform:lowercase;
+}
+.arcade-inputbar input:focus{outline:2px solid #5b4fe0;border-color:#5b4fe0}
+.arcade-inputbar input.shake{animation:shake .35s}
+.arcade-inputbar button{
+  width:100%;border:none;background:#5b4fe0;color:#fff;font-family:'Space Mono';font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;font-size:15px;padding:18px 0;cursor:pointer;transition:background .15s;
+}
+.arcade-inputbar button:hover{background:#6f63f0}
+
+/* écran de chargement initial */
+#loadingOverlay{
+  position:fixed;inset:0;background:var(--papier);display:flex;align-items:center;justify-content:center;
+  font-family:'Space Mono';font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris);z-index:999;
+}
+#loadingOverlay.hidden{display:none}
+#loadingOverlay.error{flex-direction:column;gap:14px;text-align:center;padding:30px}
+#loadingOverlay.error p{max-width:440px;font-family:'Spectral';font-size:15px;color:var(--encre);text-transform:none;letter-spacing:0;line-height:1.6}
+#loadingOverlay.error code{background:var(--papier2);padding:2px 6px;border-radius:3px;font-family:'Space Mono';font-size:13px}
+
+.score-line{font-family:'Space Mono';font-size:13px;color:var(--gris);margin-bottom:8px}
+.score-line b{color:var(--encre);font-size:16px}
+
+/* fin de partie */
+.end-box{max-width:420px;margin:0 auto}
+.end-box h2{font-size:30px;margin-bottom:10px}
+.end-box p{color:var(--gris);margin-bottom:22px}
+.end-stats{display:flex;justify-content:center;gap:30px;margin-bottom:26px}
+.end-stats div{text-align:center}
+.end-stats .n{font-family:'Fraunces';font-size:30px;font-weight:600;color:var(--rouge)}
+.end-stats .l{font-family:'Space Mono';font-size:10px;text-transform:uppercase;color:var(--gris);letter-spacing:.06em}
+
+/* archive */
+.archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.arch-card{
+  border:1.5px solid var(--ligne);background:#fff;padding:16px;text-align:left;cursor:pointer;
+  transition:.15s;border-radius:2px;
+}
+.arch-card:hover{border-color:var(--encre)}
+.arch-card .d{font-family:'Space Mono';font-size:11px;color:var(--gris);text-transform:uppercase}
+.arch-card .s{font-family:'Fraunces';font-size:20px;margin-top:6px}
+.arch-card .res{font-size:18px;margin-top:8px}
+
+footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-family:'Space Mono';font-size:11px;color:var(--gris);letter-spacing:.05em;position:relative;z-index:1}
+
+@media(max-width:560px){
+  .game-card{padding:34px 20px}
+  .speaker-btn{width:90px;height:90px;font-size:34px}
+  .input-row{flex-direction:column}
+  .arcade-card{padding:24px 22px}
+  .arcade-def{font-size:17px}
+  .arcade-topbar{margin-bottom:30px}
+}
+</style>
+</head>
+<body>
+<div id="loadingOverlay">Chargement des mots…</div>
+
+<header>
+  <div class="wrap">
+    <div class="masthead">
+      <div class="left">
+        <small>Édition du jour · Sans correcteur, sans pitié</small>
+        <h1>ORTHO<span class="x">VOX</span></h1>
+      </div>
+      <div class="right">
+        <span class="date" id="todayDate">—</span>
+        <span id="streakDisplay">Série : 0 jour</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="defi">Défi du jour</button>
+      <button class="tab" data-tab="arcade">Arcade</button>
+      <button class="tab" data-tab="archive">Archives</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- ===== DÉFI DU JOUR ===== -->
+    <section class="screen active" id="screen-defi">
+      <div class="game-card">
+        <span class="mode-label">Défi du jour</span>
+        <div class="diff-row" id="defiDiffRow"></div>
+
+        <div id="defiPlay">
+          <div class="speaker-zone">
+            <button class="speaker-btn" id="defiSpeak" aria-label="Écouter le mot">🔊</button>
+            <div class="speaker-hint">Cliquez pour écouter le mot</div>
+            <div class="replay-row">
+              <button class="mini-btn" id="defiReplaySlow">Réécouter — lentement</button>
+            </div>
+          </div>
+          <div class="input-row">
+            <input type="text" class="spell-input" id="defiInput" placeholder="…" autocomplete="off" spellcheck="false" autocapitalize="off">
+            <button class="submit-btn" id="defiSubmit">Valider</button>
+          </div>
+          <div class="feedback" id="defiFeedback"></div>
+          <div class="progress-row" id="defiProgress"></div>
+        </div>
+
+        <div id="defiEnd" class="end-box" style="display:none">
+          <h2 id="defiEndTitle">Défi terminé</h2>
+          <p id="defiEndSub"></p>
+          <div class="end-stats">
+            <div><div class="n" id="defiEndScore">0</div><div class="l">Mots justes</div></div>
+            <div><div class="n" id="defiEndStreak">0</div><div class="l">Série en cours</div></div>
+          </div>
+          <button class="mini-btn" id="defiShare">Copier mon résultat</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ARCADE ===== -->
+    <section class="screen" id="screen-arcade">
+      <div class="arcade-shell">
+        <div class="arcade-topbar">
+          <div class="arcade-lives" id="arcadeLives"></div>
+          <div class="arcade-levelinfo">
+            <span class="arcade-lvl-label" id="arcadeLvlLabel">Niveau 1 — Scribe</span>
+            <span class="arcade-lvl-progress" id="arcadeLvlProgress">— / —</span>
+          </div>
+          <div class="arcade-score"><b id="arcadeScore">0</b> pts</div>
+        </div>
+
+        <div class="arcade-stage">
+          <div id="arcadeIntro" class="arcade-intro">
+            <h2>Mode Arcade</h2>
+            <p>4 niveaux, 3 vies. Une faute ou un mot non trouvé à temps coûte une vie. Le score dépend du niveau atteint et de votre rapidité.</p>
+            <button class="arcade-start-btn" id="arcadeStart">Commencer la partie</button>
+            <p class="arcade-best">Meilleur score : <b id="arcadeBest">0</b></p>
+          </div>
+
+          <div id="arcadePlay" class="arcade-card" style="display:none">
+            <div class="arcade-timerbar"><div class="arcade-timerfill" id="arcadeTimerFill"></div></div>
+            <p class="arcade-def" id="arcadeDefText">…</p>
+            <div class="arcade-card-foot">
+              <span class="arcade-seconds" id="arcadeSeconds">25s</span>
+              <button class="arcade-replay" id="arcadeReplayBtn">🔊 Réécouter</button>
+            </div>
+          </div>
+
+          <div id="arcadeLevelUp" class="arcade-levelup" style="display:none">
+            <h2 id="arcadeLevelUpTitle">Niveau supérieur !</h2>
+            <p>Les mots se compliquent, le temps se resserre.</p>
+          </div>
+
+          <div id="arcadeEnd" class="arcade-intro" style="display:none">
+            <h2>Partie terminée</h2>
+            <p id="arcadeEndSub"></p>
+            <div class="end-stats">
+              <div><div class="n" id="arcadeEndScore">0</div><div class="l">Score final</div></div>
+              <div><div class="n" id="arcadeEndLevel">—</div><div class="l">Niveau atteint</div></div>
+            </div>
+            <button class="arcade-start-btn" id="arcadeRetry">Rejouer</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="arcade-inputbar" id="arcadeInputBar" style="display:none">
+        <input type="text" id="arcadeInput" placeholder="Commencez à taper…" autocomplete="off" spellcheck="false" autocapitalize="off">
+        <button id="arcadeSubmit">Valider (Entrée)</button>
+      </div>
+    </section>
+
+    <!-- ===== ARCHIVES ===== -->
+    <section class="screen" id="screen-archive">
+      <div class="game-card" style="text-align:left">
+        <span class="mode-label">Archives</span>
+        <p style="color:var(--gris);margin-bottom:24px">Les 14 derniers défis quotidiens. Rejouez-les librement (votre série du jour n'est pas affectée).</p>
+        <div class="archive-grid" id="archiveGrid"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  ORTHOVOX — un mot, une voix, aucune excuse. Fonctionne entièrement dans votre navigateur, aucune donnée envoyée.
+</footer>
+
+<script>
+/* ===================== DONNÉES ===================== */
+// Les mots + définitions sont chargés depuis words.json (voir loadWordData en bas de script)
+let WORD_DATA = null;
+const DIFFS = [
+  {key:"facile", label:"Scribe"},
+  {key:"moyen", label:"Lettré"},
+  {key:"difficile", label:"Érudit"},
+  {key:"expert", label:"Lexicomancien"}
+];
+const WORDS_PER_ROUND = 5;
+function getWordList(diffKey){ return WORD_DATA[diffKey].map(w=>w.word); }
+
+/* ===================== UTILITAIRES ===================== */
+function todayKey(offset=0){
+  const d = new Date();
+  d.setDate(d.getDate() - offset);
+  return d.toISOString().slice(0,10);
+}
+function seededRandom(seed){
+  let h = 0;
+  for(let i=0;i<seed.length;i++){ h = (h*31 + seed.charCodeAt(i)) >>> 0; }
+  return function(){
+    h ^= h << 13; h >>>= 0;
+    h ^= h >> 17;
+    h ^= h << 5; h >>>= 0;
+    return (h >>> 0) / 4294967296;
+  };
+}
+function pickWords(diffKey, seed, count){
+  const bank = getWordList(diffKey);
+  const rng = seededRandom(seed + diffKey);
+  for(let i=bank.length-1;i>0;i--){
+    const j = Math.floor(rng()*(i+1));
+    [bank[i],bank[j]] = [bank[j],bank[i]];
+  }
+  return bank.slice(0,count);
+}
+function normalize(str){
+  return str.trim().toLowerCase();
+}
+function store(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } }
+
+/* ===================== SYNTHÈSE VOCALE ===================== */
+let frenchVoice = null;
+function loadVoice(){
+  const voices = speechSynthesis.getVoices();
+  frenchVoice = voices.find(v=>v.lang === "fr-FR") || voices.find(v=>v.lang && v.lang.startsWith("fr")) || null;
+}
+if('speechSynthesis' in window){
+  loadVoice();
+  speechSynthesis.onvoiceschanged = loadVoice;
+}
+function speakWord(word, slow=false, btnEl=null){
+  if(!('speechSynthesis' in window)){
+    alert("La synthèse vocale n'est pas disponible sur ce navigateur.");
+    return;
+  }
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.lang = "fr-FR";
+  if(frenchVoice) utter.voice = frenchVoice;
+  utter.rate = slow ? 0.55 : 0.85;
+  utter.pitch = 1;
+  if(btnEl){
+    utter.onstart = ()=> btnEl.classList.add('speaking');
+    utter.onend = ()=> btnEl.classList.remove('speaking');
+  }
+  speechSynthesis.speak(utter);
+}
+
+/* ===================== ONGLET NAVIGATION ===================== */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    const wasArcade = document.getElementById('screen-arcade').classList.contains('active');
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('screen-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab === 'archive') renderArchive();
+    if(wasArcade && tab.dataset.tab !== 'arcade' && arcadeState.running){
+      clearInterval(arcadeState.tickTimer); // on quitte l'onglet en pleine partie : on met le minuteur en pause
+    }
+    if(tab.dataset.tab === 'arcade' && arcadeState.running && arcadeState.current){
+      nextArcadeRound(); // on relance le mot en cours avec un minuteur frais
+    }
+  });
+});
+
+/* date du jour affichée */
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+
+/* ===================== DÉFI DU JOUR ===================== */
+const defiState = {
+  diff: 'facile',
+  words: [],
+  index: 0,
+  results: [], // true/false par mot
+};
+let defiDiffButtons = {};
+
+function buildDiffRow(container, onPick, getActive){
+  container.innerHTML = '';
+  DIFFS.forEach(d=>{
+    const b = document.createElement('button');
+    b.className = 'diff-btn';
+    b.textContent = d.label;
+    b.dataset.key = d.key;
+    b.addEventListener('click', ()=> onPick(d.key));
+    container.appendChild(b);
+  });
+}
+function refreshDiffRow(container, activeKey, locked){
+  container.querySelectorAll('.diff-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.key === activeKey);
+    b.disabled = !!locked;
+  });
+}
+
+function startDefi(diffKey){
+  const todaysDone = load('orthovox_defi_done_'+todayKey(), null);
+  defiState.diff = diffKey;
+  defiState.words = pickWords(diffKey, todayKey(), WORDS_PER_ROUND);
+  defiState.index = 0;
+  defiState.results = [];
+  refreshDiffRow(document.getElementById('defiDiffRow'), diffKey, true);
+  document.getElementById('defiEnd').style.display = 'none';
+  document.getElementById('defiPlay').style.display = 'block';
+  renderDefiProgress();
+  document.getElementById('defiFeedback').textContent = '';
+  document.getElementById('defiFeedback').className = 'feedback';
+  document.getElementById('defiInput').value = '';
+  document.getElementById('defiInput').disabled = false;
+  document.getElementById('defiSubmit').disabled = false;
+  document.getElementById('defiInput').focus();
+}
+
+function renderDefiProgress(){
+  const row = document.getElementById('defiProgress');
+  row.innerHTML = '';
+  defiState.words.forEach((w,i)=>{
+    const p = document.createElement('span');
+    let cls = 'pip';
+    if(i < defiState.results.length){ cls += defiState.results[i] ? ' done' : ' miss'; }
+    else if(i === defiState.index){ cls += ' now'; }
+    p.className = cls;
+    row.appendChild(p);
+  });
+}
+
+function submitDefi(){
+  const input = document.getElementById('defiInput');
+  const val = normalize(input.value);
+  if(!val) return;
+  const word = defiState.words[defiState.index];
+  const correct = val === normalize(word);
+  defiState.results.push(correct);
+  const fb = document.getElementById('defiFeedback');
+  if(correct){
+    fb.textContent = 'Correct !';
+    fb.className = 'feedback ok';
+  } else {
+    fb.textContent = `Raté — c'était « ${word} »`;
+    fb.className = 'feedback ko';
+    input.classList.add('shake');
+    setTimeout(()=>input.classList.remove('shake'), 350);
+  }
+  defiState.index++;
+  input.value = '';
+  renderDefiProgress();
+  if(defiState.index >= defiState.words.length){
+    setTimeout(endDefi, 700);
+  } else {
+    setTimeout(()=>{
+      fb.textContent = '';
+      speakWord(defiState.words[defiState.index], false, document.getElementById('defiSpeak'));
+    }, 700);
+  }
+}
+
+function endDefi(){
+  document.getElementById('defiPlay').style.display = 'none';
+  document.getElementById('defiEnd').style.display = 'block';
+  const score = defiState.results.filter(Boolean).length;
+  document.getElementById('defiEndScore').textContent = score + '/' + defiState.words.length;
+
+  // mise à jour de la série de jours
+  let streak = load('orthovox_streak', {count:0, last:null});
+  const yKey = todayKey(1);
+  if(streak.last === yKey){ streak.count += 1; }
+  else if(streak.last !== todayKey()){ streak.count = 1; }
+  streak.last = todayKey();
+  store('orthovox_streak', streak);
+  document.getElementById('streakDisplay').textContent = `Série : ${streak.count} jour${streak.count>1?'s':''}`;
+  document.getElementById('defiEndStreak').textContent = streak.count;
+
+  store('orthovox_defi_done_'+todayKey(), {diff:defiState.diff, score, total:defiState.words.length, results:defiState.results});
+
+  document.getElementById('defiEndTitle').textContent = score === defiState.words.length ? 'Sans faute !' : 'Défi terminé';
+  document.getElementById('defiEndSub').textContent = score === defiState.words.length
+    ? 'Vous avez tout bon aujourd\'hui.'
+    : `${defiState.words.length - score} mot(s) à revoir demain.`;
+}
+
+document.getElementById('defiShare').addEventListener('click', ()=>{
+  const sq = defiState.results.map(r=>r?'🟩':'🟥').join('');
+  const text = `ORTHOVOX ${todayKey()} — ${defiState.results.filter(Boolean).length}/${defiState.words.length}\n${sq}`;
+  navigator.clipboard?.writeText(text).then(()=>{
+    const btn = document.getElementById('defiShare');
+    const orig = btn.textContent;
+    btn.textContent = 'Copié !';
+    setTimeout(()=>btn.textContent = orig, 1500);
+  });
+});
+
+document.getElementById('defiSpeak').addEventListener('click', ()=>{
+  if(defiState.index < defiState.words.length) speakWord(defiState.words[defiState.index], false, document.getElementById('defiSpeak'));
+});
+document.getElementById('defiReplaySlow').addEventListener('click', ()=>{
+  if(defiState.index < defiState.words.length) speakWord(defiState.words[defiState.index], true, document.getElementById('defiSpeak'));
+});
+document.getElementById('defiSubmit').addEventListener('click', submitDefi);
+document.getElementById('defiInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') submitDefi(); });
+
+buildDiffRow(document.getElementById('defiDiffRow'), startDefi, ()=>defiState.diff);
+
+/* ===================== ARCADE ===================== */
+const LEVEL_META = [
+  {key:'facile', num:1, name:'Scribe', seconds:25},
+  {key:'moyen', num:2, name:'Lettré', seconds:22},
+  {key:'difficile', num:3, name:'Érudit', seconds:20},
+  {key:'expert', num:4, name:'Lexicomancien', seconds:18}
+];
+
+const arcadeState = {
+  lives: 3,
+  score: 0,
+  levelIdx: 0,
+  pool: [],
+  poolIndex: 0,
+  current: null,
+  running: false,
+  roundId: 0,
+  tickTimer: null,
+  startTime: 0,
+  duration: 0,
+};
+
+function arcadeBestScore(){ return load('orthovox_arcade_best', 0); }
+
+function shuffledPool(diffKey){
+  const arr = WORD_DATA[diffKey].slice();
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+function renderArcadeLives(){
+  const el = document.getElementById('arcadeLives');
+  el.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const span = document.createElement('span');
+    span.className = 'arcade-life' + (i >= arcadeState.lives ? ' lost' : '');
+    span.textContent = '❤️';
+    el.appendChild(span);
+  }
+}
+function updateArcadeHeader(){
+  const lvl = LEVEL_META[arcadeState.levelIdx];
+  document.getElementById('arcadeLvlLabel').textContent = `Niveau ${lvl.num} — ${lvl.name}`;
+  document.getElementById('arcadeLvlProgress').textContent = `${arcadeState.poolIndex+1} / ${arcadeState.pool.length}`;
+  document.getElementById('arcadeScore').textContent = arcadeState.score;
+}
+function startArcade(){
+  arcadeState.lives = 3;
+  arcadeState.score = 0;
+  arcadeState.levelIdx = 0;
+  arcadeState.pool = shuffledPool(LEVEL_META[0].key);
+  arcadeState.poolIndex = 0;
+  arcadeState.running = true;
+  arcadeState.roundId = 0;
+  document.getElementById('arcadeIntro').style.display = 'none';
+  document.getElementById('arcadeEnd').style.display = 'none';
+  document.getElementById('arcadeLevelUp').style.display = 'none';
+  document.getElementById('arcadePlay').style.display = 'block';
+  document.getElementById('arcadeInputBar').style.display = 'block';
+  renderArcadeLives();
+  updateArcadeHeader();
+  nextArcadeRound();
+}
+function nextArcadeRound(){
+  if(arcadeState.poolIndex >= arcadeState.pool.length){
+    advanceArcadeLevel();
+    return;
+  }
+  arcadeState.roundId++;
+  const myRound = arcadeState.roundId;
+  arcadeState.current = arcadeState.pool[arcadeState.poolIndex];
+  const lvl = LEVEL_META[arcadeState.levelIdx];
+  arcadeState.duration = lvl.seconds * 1000;
+  arcadeState.startTime = Date.now();
+
+  document.getElementById('arcadeDefText').textContent = arcadeState.current.def;
+  updateArcadeHeader();
+  const input = document.getElementById('arcadeInput');
+  input.value = '';
+  input.disabled = false;
+  input.focus();
+  const card = document.getElementById('arcadePlay');
+  card.classList.remove('flash-ok','flash-ko');
+  document.getElementById('arcadeTimerFill').classList.remove('low');
+  document.getElementById('arcadeTimerFill').style.width = '100%';
+  document.getElementById('arcadeSeconds').classList.remove('low');
+  document.getElementById('arcadeSeconds').textContent = lvl.seconds + 's';
+
+  clearInterval(arcadeState.tickTimer);
+  arcadeState.tickTimer = setInterval(()=> tickArcadeTimer(myRound), 100);
+
+  speakWord(arcadeState.current.word, false, null);
+}
+function tickArcadeTimer(myRound){
+  if(arcadeState.roundId !== myRound) return;
+  const remaining = Math.max(0, arcadeState.duration - (Date.now() - arcadeState.startTime));
+  const pct = (remaining / arcadeState.duration) * 100;
+  document.getElementById('arcadeTimerFill').style.width = pct + '%';
+  const secs = Math.ceil(remaining/1000);
+  document.getElementById('arcadeSeconds').textContent = secs + 's';
+  if(pct < 25){
+    document.getElementById('arcadeTimerFill').classList.add('low');
+    document.getElementById('arcadeSeconds').classList.add('low');
+  }
+  if(remaining <= 0){
+    clearInterval(arcadeState.tickTimer);
+    if(arcadeState.running){
+      document.getElementById('arcadeInput').disabled = true;
+      loseArcadeLife(`Temps écoulé — c'était « ${arcadeState.current.word} »`);
+    }
+  }
+}
+function submitArcade(){
+  if(!arcadeState.running) return;
+  const input = document.getElementById('arcadeInput');
+  const val = normalize(input.value);
+  if(!val) return;
+  const correct = val === normalize(arcadeState.current.word);
+  if(correct){
+    clearInterval(arcadeState.tickTimer);
+    const remainingSecs = Math.max(0, Math.ceil((arcadeState.duration - (Date.now()-arcadeState.startTime))/1000));
+    const lvl = LEVEL_META[arcadeState.levelIdx];
+    arcadeState.score += lvl.num*10 + remainingSecs;
+    document.getElementById('arcadePlay').classList.add('flash-ok');
+    document.getElementById('arcadeScore').textContent = arcadeState.score;
+    input.disabled = true;
+    arcadeState.poolIndex++;
+    setTimeout(nextArcadeRound, 500);
+  } else {
+    clearInterval(arcadeState.tickTimer);
+    input.disabled = true;
+    input.classList.add('shake');
+    setTimeout(()=>input.classList.remove('shake'), 350);
+    loseArcadeLife(`Ce n'est pas ça — c'était « ${arcadeState.current.word} »`);
+  }
+}
+function loseArcadeLife(msg){
+  arcadeState.lives--;
+  renderArcadeLives();
+  document.getElementById('arcadePlay').classList.add('flash-ko');
+  if(arcadeState.lives <= 0){
+    setTimeout(()=>endArcade(msg), 600);
+  } else {
+    arcadeState.poolIndex++;
+    setTimeout(nextArcadeRound, 900);
+  }
+}
+function advanceArcadeLevel(){
+  if(arcadeState.levelIdx < LEVEL_META.length - 1){
+    arcadeState.levelIdx++;
+  }
+  arcadeState.pool = shuffledPool(LEVEL_META[arcadeState.levelIdx].key);
+  arcadeState.poolIndex = 0;
+  const lvl = LEVEL_META[arcadeState.levelIdx];
+  document.getElementById('arcadePlay').style.display = 'none';
+  document.getElementById('arcadeLevelUp').style.display = 'block';
+  document.getElementById('arcadeLevelUpTitle').textContent = `Niveau ${lvl.num} — ${lvl.name}`;
+  setTimeout(()=>{
+    document.getElementById('arcadeLevelUp').style.display = 'none';
+    document.getElementById('arcadePlay').style.display = 'block';
+    nextArcadeRound();
+  }, 1600);
+}
+function endArcade(msg){
+  arcadeState.running = false;
+  clearInterval(arcadeState.tickTimer);
+  document.getElementById('arcadePlay').style.display = 'none';
+  document.getElementById('arcadeInputBar').style.display = 'none';
+  document.getElementById('arcadeEnd').style.display = 'block';
+  document.getElementById('arcadeEndScore').textContent = arcadeState.score;
+  document.getElementById('arcadeEndLevel').textContent = LEVEL_META[arcadeState.levelIdx].name;
+  const best = arcadeBestScore();
+  const isNewBest = arcadeState.score > best;
+  if(isNewBest) store('orthovox_arcade_best', arcadeState.score);
+  document.getElementById('arcadeBest').textContent = isNewBest ? arcadeState.score : best;
+  document.getElementById('arcadeEndSub').textContent = isNewBest
+    ? `Nouveau record ! ${msg || ''}`
+    : (msg || 'Retentez votre chance.');
+}
+
+document.getElementById('arcadeStart').addEventListener('click', startArcade);
+document.getElementById('arcadeRetry').addEventListener('click', startArcade);
+document.getElementById('arcadeSubmit').addEventListener('click', submitArcade);
+document.getElementById('arcadeInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') submitArcade(); });
+document.getElementById('arcadeReplayBtn').addEventListener('click', ()=>{
+  if(arcadeState.running && arcadeState.current) speakWord(arcadeState.current.word, true, null);
+});
+
+/* ===================== CHARGEMENT DES DONNÉES ===================== */
+async function loadWordData(){
+  try{
+    const res = await fetch('words.json');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    WORD_DATA = await res.json();
+    initApp();
+  } catch(err){
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('error');
+    overlay.innerHTML = `<p><strong>Impossible de charger la liste de mots (words.json).</strong><br><br>
+      Si vous avez ouvert ce fichier directement depuis votre ordinateur (double-clic), c'est normal : les navigateurs bloquent ce type de chargement pour les fichiers locaux.<br><br>
+      Solutions : déployez le site sur GitHub Pages, ou testez en local avec un petit serveur, par exemple en lançant <code>python3 -m http.server</code> dans le dossier puis en ouvrant <code>http://localhost:8000</code>.</p>`;
+  }
+}
+function initApp(){
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  const s = load('orthovox_streak', {count:0,last:null});
+  document.getElementById('streakDisplay').textContent = `Série : ${s.count} jour${s.count>1?'s':''}`;
+  startDefi('facile');
+  document.getElementById('arcadeBest').textContent = arcadeBestScore();
+}
+function renderArchive(){
+  const grid = document.getElementById('archiveGrid');
+  grid.innerHTML = '';
+  for(let i=1; i<=14; i++){
+    const key = todayKey(i);
+    const done = load('orthovox_defi_done_'+key, null);
+    const card = document.createElement('div');
+    card.className = 'arch-card';
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const label = d.toLocaleDateString('fr-FR', {weekday:'short', day:'numeric', month:'short'});
+    card.innerHTML = `<div class="d">${label}</div><div class="s">Défi #${14-i+1}</div>` +
+      (done ? `<div class="res">${'🟩'.repeat(done.score)}${'🟥'.repeat(done.total-done.score)}</div>` : `<div class="res mono" style="font-size:12px;color:var(--gris)">Non joué</div>`);
+    card.addEventListener('click', ()=>{
+      document.querySelector('.tab[data-tab="defi"]').click();
+      startDefi(done ? done.diff : 'facile');
+    });
+    grid.appendChild(card);
+  }
+}
+loadWordData();
+</script>
+</body>
+</html>
