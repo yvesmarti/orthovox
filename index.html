@@ -2,8 +2,21 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ORTHOVOX — Écoute. Épelle. Sans filet.</title>
+<meta name="description" content="ORTHOVOX — la dictée quotidienne : écoutez le mot, épelez-le, sans correcteur. Un défi du jour, un mode arcade chronométré et des archives, entièrement dans votre navigateur.">
+<meta name="theme-color" content="#f6f1e4">
+<meta name="color-scheme" content="light">
+<!-- Favicon SVG inline, aux couleurs du site -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f6f1e4'/%3E%3Ctext x='32' y='46' font-family='Georgia,serif' font-size='44' font-weight='700' text-anchor='middle' fill='%231c1a17'%3EO%3C/text%3E%3Ccircle cx='47' cy='17' r='5' fill='%23b3432b'/%3E%3C/svg%3E">
+<!-- Open Graph / partage -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="ORTHOVOX — Écoute. Épelle. Sans filet.">
+<meta property="og:description" content="La dictée quotidienne : écoutez le mot, épelez-le, sans correcteur. Défi du jour, mode arcade et archives.">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ORTHOVOX — Écoute. Épelle. Sans filet.">
+<meta name="twitter:description" content="La dictée quotidienne : écoutez le mot, épelez-le, sans correcteur.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Space+Mono:wght@400;700&family=Spectral:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -18,6 +31,15 @@
   --or:#c9941f;
   --gris:#73685a;
   --ligne:#d8cbac;
+  /* Nocturne chaud — mode Arcade, dérivé de la palette éditoriale */
+  --nuit:#181410;
+  --nuit2:#221c16;
+  --nuit-bord:rgba(246,241,228,.09);
+  --nuit-texte:#efe7d6;
+  --nuit-doux:#a99e8b;
+  --nuit-faible:#7a7061;
+  --or-vif:#e0ac3a;
+  --vert-clair:#7ba05b;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -31,6 +53,8 @@ body{
 .mono{font-family:'Space Mono',monospace}
 h1,h2,h3,.display{font-family:'Fraunces',serif;font-weight:600;line-height:1.05}
 .wrap{max-width:980px;margin:0 auto;padding:0 24px}
+:focus-visible{outline:3px solid var(--or);outline-offset:2px}
+.arcade-shell :focus-visible,.arcade-inputbar :focus-visible{outline-color:var(--or-vif)}
 
 /* texture papier subtile */
 body::before{
@@ -65,7 +89,13 @@ header{position:relative;z-index:5;padding:28px 0 0}
 
 main{position:relative;z-index:1;padding:48px 0 90px}
 .screen{display:none}
-.screen.active{display:block}
+.screen.active{display:block;animation:screenIn .32s ease}
+@keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .screen.active{animation:none}
+  *{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
 
 /* ===== Carte de jeu ===== */
 .game-card{
@@ -82,11 +112,12 @@ main{position:relative;z-index:1;padding:48px 0 90px}
 .diff-row{display:flex;justify-content:center;gap:10px;margin-bottom:30px;flex-wrap:wrap}
 .diff-btn{
   font-family:'Space Mono';font-size:12px;letter-spacing:.05em;text-transform:uppercase;
-  padding:8px 16px;border:1.5px solid var(--encre);background:none;cursor:pointer;border-radius:30px;
-  color:var(--encre);transition:.15s;
+  padding:8px 16px;border:1.5px solid var(--encre);background:none;cursor:pointer;border-radius:2px;
+  color:var(--encre);transition:background .15s,color .15s,border-color .15s;
 }
 .diff-btn.active{background:var(--encre);color:var(--papier)}
-.diff-btn:disabled{opacity:.35;cursor:default}
+.diff-btn:disabled{color:var(--gris);border-color:var(--ligne);cursor:default}
+.diff-btn.active:disabled{background:var(--gris);border-color:var(--gris);color:var(--papier)}
 
 .speaker-zone{margin:18px 0 36px}
 .speaker-btn{
@@ -99,7 +130,7 @@ main{position:relative;z-index:1;padding:48px 0 90px}
 .speaker-btn.speaking{animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,80,47,.35)}50%{box-shadow:0 0 0 16px rgba(212,80,47,0)}}
 .speaker-hint{font-family:'Space Mono';font-size:12px;color:var(--gris);margin-top:14px;letter-spacing:.04em}
-.replay-row{display:flex;justify-content:center;gap:10px;margin-top:10px}
+.replay-row{display:flex;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap}
 .mini-btn{
   font-family:'Space Mono';font-size:11px;letter-spacing:.04em;background:none;border:1px solid var(--ligne);
   color:var(--gris);padding:6px 12px;border-radius:20px;cursor:pointer;
@@ -137,7 +168,7 @@ main{position:relative;z-index:1;padding:48px 0 90px}
 body{overflow-x:hidden}
 .arcade-shell{
   position:relative;left:50%;margin-left:-50vw;width:100vw;
-  background:#14141a;color:#eceaf5;padding:30px 20px 130px;
+  background:var(--nuit);color:var(--nuit-texte);padding:30px 20px 130px;
 }
 .arcade-topbar{
   max-width:720px;margin:0 auto 40px;display:flex;justify-content:space-between;align-items:flex-start;
@@ -146,67 +177,77 @@ body{overflow-x:hidden}
 .arcade-lives{font-size:20px;letter-spacing:5px}
 .arcade-life.lost{opacity:.2;filter:grayscale(1)}
 .arcade-levelinfo{text-align:center}
-.arcade-lvl-label{display:block;font-size:13px;letter-spacing:.08em;color:#9b8cf5;font-weight:700;text-transform:uppercase}
-.arcade-lvl-progress{display:block;font-size:11px;color:#7a7686;margin-top:4px}
-.arcade-score{font-size:13px;color:#7a7686;text-align:right}
+.arcade-lvl-label{display:block;font-size:13px;letter-spacing:.08em;color:var(--or-vif);font-weight:700;text-transform:uppercase}
+.arcade-lvl-progress{display:block;font-size:11px;color:var(--nuit-faible);margin-top:4px}
+.arcade-score{font-size:13px;color:var(--nuit-faible);text-align:right}
 .arcade-score b{font-family:'Fraunces';font-size:21px;color:#fff;font-weight:600}
 
 .arcade-stage{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px}
 .arcade-intro,.arcade-levelup{max-width:440px;margin:30px auto;text-align:center}
 .arcade-intro h2,.arcade-levelup h2{font-size:28px;color:#fff;margin-bottom:14px}
-.arcade-intro p,.arcade-levelup p{color:#a9a4ba;margin-bottom:24px;font-size:15.5px}
+.arcade-intro p,.arcade-levelup p{color:var(--nuit-doux);margin-bottom:24px;font-size:15.5px}
 .arcade-start-btn{
   font-family:'Space Mono';font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:14px;
-  background:#5b4fe0;color:#fff;border:none;padding:16px 34px;cursor:pointer;border-radius:8px;transition:background .15s;
+  background:var(--rouge-vif);color:#fff;border:none;padding:16px 34px;cursor:pointer;border-radius:2px;transition:background .15s;
 }
-.arcade-start-btn:hover{background:#6f63f0}
-.arcade-best{font-family:'Space Mono';font-size:12px;color:#7a7686;margin-top:20px}
-.arcade-best b{color:#eceaf5}
+.arcade-start-btn:hover{background:var(--rouge)}
+.arcade-best{font-family:'Space Mono';font-size:12px;color:var(--nuit-faible);margin-top:20px}
+.arcade-best b{color:var(--nuit-texte)}
 
 .arcade-card{
-  width:100%;max-width:560px;margin:0 auto;background:#1d1d27;border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;padding:34px 36px;box-shadow:0 24px 60px rgba(0,0,0,.4);
+  width:100%;max-width:560px;margin:0 auto;background:var(--nuit2);border:1px solid var(--nuit-bord);
+  border-radius:6px;padding:34px 36px;box-shadow:0 24px 60px rgba(0,0,0,.45);
 }
-.arcade-timerbar{width:100%;height:5px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-bottom:24px}
-.arcade-timerfill{height:100%;width:100%;background:#5b4fe0;border-radius:4px;transition:width .1s linear,background .3s}
-.arcade-timerfill.low{background:#d4502f}
-.arcade-def{font-size:19px;color:#f1eff8;line-height:1.55;margin-bottom:28px;min-height:60px}
-.arcade-card-foot{display:flex;justify-content:space-between;align-items:center;font-family:'Space Mono';font-size:13px;color:#8b86a0}
-.arcade-seconds{font-weight:700;color:#cfcae0}
+.arcade-timerbar{width:100%;height:5px;background:rgba(246,241,228,.1);border-radius:4px;overflow:hidden;margin-bottom:24px}
+.arcade-timerfill{height:100%;width:100%;background:var(--or-vif);border-radius:4px;transition:width .1s linear,background .3s}
+.arcade-timerfill.low{background:var(--rouge-vif)}
+.arcade-def{font-size:19px;color:var(--nuit-texte);line-height:1.55;margin-bottom:28px;min-height:60px}
+.arcade-card-foot{display:flex;justify-content:space-between;align-items:center;font-family:'Space Mono';font-size:13px;color:var(--nuit-doux)}
+.arcade-seconds{font-weight:700;color:#fff}
 .arcade-seconds.low{color:#ef7a5c}
-.arcade-replay{background:none;border:1px solid rgba(255,255,255,.14);color:#9b8cf5;font-family:'Space Mono';font-size:12.5px;cursor:pointer;letter-spacing:.03em;padding:6px 14px;border-radius:20px}
-.arcade-replay:hover{border-color:#9b8cf5;color:#c2b8ff}
+.arcade-replay{background:none;border:1px solid var(--nuit-bord);color:var(--or-vif);font-family:'Space Mono';font-size:12.5px;cursor:pointer;letter-spacing:.03em;padding:6px 14px;border-radius:2px;transition:border-color .15s,color .15s}
+.arcade-replay:hover{border-color:var(--or-vif);color:var(--or-vif)}
 .arcade-card.flash-ok{animation:flashOk .4s}
 .arcade-card.flash-ko{animation:flashKo .4s}
-@keyframes flashOk{30%{box-shadow:0 0 0 6px rgba(82,196,120,.25)}}
+@keyframes flashOk{30%{box-shadow:0 0 0 6px rgba(123,160,91,.3)}}
 @keyframes flashKo{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
 
-.arcade-shell .end-stats .n{color:#9b8cf5}
-.arcade-shell .end-stats .l{color:#8b86a0}
+.arcade-shell .end-stats .n{color:var(--or-vif)}
+.arcade-shell .end-stats .l{color:var(--nuit-doux)}
+.arcade-shell .arcade-reveal{color:var(--nuit-doux)}
+.arcade-shell .arcade-reveal .miss{color:#ef7a5c;text-decoration:underline;text-decoration-color:#ef7a5c}
+.arcade-shell .arcade-reveal .hit{color:var(--vert-clair)}
 
 .arcade-inputbar{
   position:fixed;left:0;right:0;bottom:0;z-index:60;
-  background:#14141a;border-top:1px solid rgba(255,255,255,.08);
+  background:var(--nuit);border-top:1px solid var(--nuit-bord);
+  padding-bottom:env(safe-area-inset-bottom);
 }
 .arcade-inputbar input{
   width:calc(100% - 40px);max-width:680px;margin:14px auto 12px;display:block;
   font-family:'Space Mono';font-size:17px;letter-spacing:.05em;text-align:center;
-  background:#1d1d27;border:1.5px solid rgba(255,255,255,.12);color:#fff;
-  padding:14px 18px;border-radius:8px;text-transform:lowercase;
+  background:var(--nuit2);border:1.5px solid var(--nuit-bord);color:#fff;
+  padding:14px 18px;border-radius:2px;text-transform:lowercase;
 }
-.arcade-inputbar input:focus{outline:2px solid #5b4fe0;border-color:#5b4fe0}
+.arcade-inputbar input:focus{outline:2px solid var(--or-vif);border-color:var(--or-vif)}
 .arcade-inputbar input.shake{animation:shake .35s}
 .arcade-inputbar button{
-  width:100%;border:none;background:#5b4fe0;color:#fff;font-family:'Space Mono';font-weight:700;
+  width:100%;border:none;background:var(--rouge-vif);color:#fff;font-family:'Space Mono';font-weight:700;
   letter-spacing:.05em;text-transform:uppercase;font-size:15px;padding:18px 0;cursor:pointer;transition:background .15s;
 }
-.arcade-inputbar button:hover{background:#6f63f0}
+.arcade-inputbar button:hover{background:var(--rouge)}
 
 /* écran de chargement initial */
 #loadingOverlay{
-  position:fixed;inset:0;background:var(--papier);display:flex;align-items:center;justify-content:center;
+  position:fixed;inset:0;background:var(--papier);display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;
   font-family:'Space Mono';font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--gris);z-index:999;
 }
+#loadingOverlay .spinner{
+  width:34px;height:34px;border:3px solid var(--ligne);border-top-color:var(--rouge);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadingOverlay.error .spinner{display:none}
 #loadingOverlay.hidden{display:none}
 #loadingOverlay.error{flex-direction:column;gap:14px;text-align:center;padding:30px}
 #loadingOverlay.error p{max-width:440px;font-family:'Spectral';font-size:15px;color:var(--encre);text-transform:none;letter-spacing:0;line-height:1.6}
@@ -223,6 +264,56 @@ body{overflow-x:hidden}
 .end-stats div{text-align:center}
 .end-stats .n{font-family:'Fraunces';font-size:30px;font-weight:600;color:var(--rouge)}
 .end-stats .l{font-family:'Space Mono';font-size:10px;text-transform:uppercase;color:var(--gris);letter-spacing:.06em}
+
+/* indice définition + réécoute clavier (Défi) */
+.defi-def{
+  max-width:440px;margin:0 auto 18px;font-family:'Spectral';font-size:15px;color:var(--gris);
+  line-height:1.5;border-left:2px solid var(--or);padding:6px 0 6px 14px;text-align:left;
+}
+.defi-def.hidden{display:none}
+.kbd-hint{font-family:'Space Mono';font-size:10.5px;letter-spacing:.03em;color:var(--gris);margin-top:14px;opacity:.85}
+.kbd-hint kbd{
+  font-family:'Space Mono';background:var(--papier2);border:1px solid var(--ligne);border-radius:3px;
+  padding:1px 6px;font-size:10.5px;color:var(--encre);
+}
+
+/* surlignage lettre à lettre du mot correct */
+.reveal{font-family:'Space Mono';font-size:18px;letter-spacing:.1em;margin-top:4px}
+.reveal .hit{color:var(--vert)}
+.reveal .miss{color:var(--rouge);text-decoration:underline;text-decoration-thickness:2px}
+
+/* panneau de réglages */
+.settings-btn{
+  background:none;border:1px solid var(--ligne);border-radius:2px;cursor:pointer;color:var(--gris);
+  font-size:18px;width:34px;height:34px;display:inline-grid;place-items:center;transition:border-color .15s,color .15s;
+}
+.settings-btn:hover{border-color:var(--encre);color:var(--encre)}
+.settings-backdrop{
+  position:fixed;inset:0;background:rgba(28,26,23,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+}
+.settings-backdrop.open{display:flex}
+.settings-panel{
+  background:var(--papier);border:2px solid var(--encre);border-radius:2px;box-shadow:7px 7px 0 var(--ligne);
+  max-width:400px;width:100%;padding:30px 28px;
+}
+.settings-panel h2{font-size:22px;margin-bottom:4px}
+.settings-panel .sub{font-family:'Space Mono';font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);margin-bottom:22px}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-top:1px solid var(--ligne)}
+.set-row .lab{font-family:'Spectral';font-size:15px}
+.set-row .lab small{display:block;font-size:12px;color:var(--gris);margin-top:2px}
+.set-row input[type=range]{accent-color:var(--rouge);width:120px}
+.set-row .switch{position:relative;width:46px;height:26px;flex:none}
+.set-row .switch input{opacity:0;width:0;height:0}
+.set-row .switch .track{position:absolute;inset:0;background:var(--ligne);border-radius:20px;transition:background .15s;cursor:pointer}
+.set-row .switch .track::before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:var(--papier);border-radius:50%;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.set-row .switch input:checked + .track{background:var(--vert)}
+.set-row .switch input:checked + .track::before{transform:translateX(20px)}
+.set-row .switch input:focus-visible + .track{outline:3px solid var(--or);outline-offset:2px}
+.settings-close{
+  margin-top:22px;width:100%;font-family:'Space Mono';font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:13px;
+  background:var(--encre);color:var(--papier);border:none;padding:13px 0;cursor:pointer;border-radius:2px;
+}
+.rate-val{font-family:'Space Mono';font-size:12px;color:var(--gris);min-width:34px;text-align:right}
 
 /* archive */
 .archive-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
@@ -248,7 +339,31 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
 </style>
 </head>
 <body>
-<div id="loadingOverlay">Chargement des mots…</div>
+<div id="loadingOverlay"><div class="spinner" aria-hidden="true"></div><span>Chargement des mots…</span></div>
+
+<!-- Panneau de réglages -->
+<div class="settings-backdrop" id="settingsBackdrop" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+  <div class="settings-panel">
+    <h2 id="settingsTitle">Réglages</h2>
+    <p class="sub">Préférences enregistrées dans votre navigateur</p>
+    <div class="set-row">
+      <span class="lab">Vitesse de la voix<small>Débit de la dictée normale</small></span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <input type="range" id="setRate" min="0.5" max="1" step="0.05" aria-label="Vitesse de la voix">
+        <span class="rate-val" id="setRateVal">0.85</span>
+      </span>
+    </div>
+    <div class="set-row">
+      <span class="lab">Tolérance aux accents<small>Accepter un mot juste aux accents près</small></span>
+      <label class="switch"><input type="checkbox" id="setAccents"><span class="track"></span></label>
+    </div>
+    <div class="set-row">
+      <span class="lab">Indice définition<small>Afficher le bouton d'indice dans le Défi</small></span>
+      <label class="switch"><input type="checkbox" id="setHint"><span class="track"></span></label>
+    </div>
+    <button class="settings-close" id="settingsClose">Fermer</button>
+  </div>
+</div>
 
 <header>
   <div class="wrap">
@@ -260,12 +375,13 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
       <div class="right">
         <span class="date" id="todayDate">—</span>
         <span id="streakDisplay">Série : 0 jour</span>
+        <button class="settings-btn" id="settingsOpen" aria-label="Réglages" aria-haspopup="dialog" style="margin-top:8px">⚙</button>
       </div>
     </div>
-    <div class="tabs">
-      <button class="tab active" data-tab="defi">Défi du jour</button>
-      <button class="tab" data-tab="arcade">Arcade</button>
-      <button class="tab" data-tab="archive">Archives</button>
+    <div class="tabs" role="tablist" aria-label="Modes de jeu">
+      <button class="tab active" data-tab="defi" role="tab" id="tab-defi" aria-controls="screen-defi" aria-selected="true">Défi du jour</button>
+      <button class="tab" data-tab="arcade" role="tab" id="tab-arcade" aria-controls="screen-arcade" aria-selected="false" tabindex="-1">Arcade</button>
+      <button class="tab" data-tab="archive" role="tab" id="tab-archive" aria-controls="screen-archive" aria-selected="false" tabindex="-1">Archives</button>
     </div>
   </div>
 </header>
@@ -274,7 +390,7 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
   <div class="wrap">
 
     <!-- ===== DÉFI DU JOUR ===== -->
-    <section class="screen active" id="screen-defi">
+    <section class="screen active" id="screen-defi" role="tabpanel" aria-labelledby="tab-defi">
       <div class="game-card">
         <span class="mode-label">Défi du jour</span>
         <div class="diff-row" id="defiDiffRow"></div>
@@ -285,14 +401,17 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
             <div class="speaker-hint">Cliquez pour écouter le mot</div>
             <div class="replay-row">
               <button class="mini-btn" id="defiReplaySlow">Réécouter — lentement</button>
+              <button class="mini-btn" id="defiHint" aria-expanded="false">Indice — définition</button>
             </div>
           </div>
+          <p class="defi-def hidden" id="defiDef"></p>
           <div class="input-row">
-            <input type="text" class="spell-input" id="defiInput" placeholder="…" autocomplete="off" spellcheck="false" autocapitalize="off">
+            <input type="text" class="spell-input" id="defiInput" placeholder="…" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Épelez le mot entendu">
             <button class="submit-btn" id="defiSubmit">Valider</button>
           </div>
-          <div class="feedback" id="defiFeedback"></div>
-          <div class="progress-row" id="defiProgress"></div>
+          <div class="feedback" id="defiFeedback" aria-live="assertive" role="status"></div>
+          <div class="progress-row" id="defiProgress" aria-hidden="true"></div>
+          <p class="kbd-hint"><kbd>Entrée</kbd> valider · <kbd>Échap</kbd> réécouter · <kbd>Maj</kbd>+<kbd>Échap</kbd> lentement</p>
         </div>
 
         <div id="defiEnd" class="end-box" style="display:none">
@@ -308,10 +427,10 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
     </section>
 
     <!-- ===== ARCADE ===== -->
-    <section class="screen" id="screen-arcade">
+    <section class="screen" id="screen-arcade" role="tabpanel" aria-labelledby="tab-arcade">
       <div class="arcade-shell">
         <div class="arcade-topbar">
-          <div class="arcade-lives" id="arcadeLives"></div>
+          <div class="arcade-lives" id="arcadeLives" role="img"></div>
           <div class="arcade-levelinfo">
             <span class="arcade-lvl-label" id="arcadeLvlLabel">Niveau 1 — Scribe</span>
             <span class="arcade-lvl-progress" id="arcadeLvlProgress">— / —</span>
@@ -334,6 +453,7 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
               <span class="arcade-seconds" id="arcadeSeconds">25s</span>
               <button class="arcade-replay" id="arcadeReplayBtn">🔊 Réécouter</button>
             </div>
+            <p class="arcade-reveal reveal" id="arcadeReveal" aria-live="assertive" style="min-height:24px;margin-top:18px;text-align:center"></p>
           </div>
 
           <div id="arcadeLevelUp" class="arcade-levelup" style="display:none">
@@ -360,7 +480,7 @@ footer{border-top:3px solid var(--encre);padding:26px 0;text-align:center;font-f
     </section>
 
     <!-- ===== ARCHIVES ===== -->
-    <section class="screen" id="screen-archive">
+    <section class="screen" id="screen-archive" role="tabpanel" aria-labelledby="tab-archive">
       <div class="game-card" style="text-align:left">
         <span class="mode-label">Archives</span>
         <p style="color:var(--gris);margin-bottom:24px">Les 14 derniers défis quotidiens. Rejouez-les librement (votre série du jour n'est pas affectée).</p>
@@ -386,7 +506,6 @@ const DIFFS = [
   {key:"expert", label:"Lexicomancien"}
 ];
 const WORDS_PER_ROUND = 5;
-function getWordList(diffKey){ return WORD_DATA[diffKey].map(w=>w.word); }
 
 /* ===================== UTILITAIRES ===================== */
 function todayKey(offset=0){
@@ -405,7 +524,7 @@ function seededRandom(seed){
   };
 }
 function pickWords(diffKey, seed, count){
-  const bank = getWordList(diffKey);
+  const bank = WORD_DATA[diffKey].slice(); // objets {word, def}, copie pour ne pas muter les données
   const rng = seededRandom(seed + diffKey);
   for(let i=bank.length-1;i>0;i--){
     const j = Math.floor(rng()*(i+1));
@@ -416,29 +535,70 @@ function pickWords(diffKey, seed, count){
 function normalize(str){
   return str.trim().toLowerCase();
 }
+function stripAccents(str){
+  return str.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+}
+/* Compare la saisie à la cible en tenant compte du réglage de tolérance aux accents.
+   Renvoie {correct, accentsOnly} — accentsOnly = juste sauf les accents. */
+function checkWord(input, target){
+  const a = normalize(input), b = normalize(target);
+  if(a === b) return {correct:true, accentsOnly:false};
+  const accentsOnly = stripAccents(a) === stripAccents(b);
+  if(accentsOnly && SETTINGS.accents) return {correct:true, accentsOnly:true};
+  return {correct:false, accentsOnly};
+}
+/* Construit le mot cible en surlignant lettre à lettre les écarts avec la saisie. */
+function diffLetters(input, target){
+  const a = normalize(input), b = normalize(target);
+  let html = '';
+  for(let i=0;i<target.length;i++){
+    const ok = a[i] !== undefined && normalize(a[i]) === normalize(target[i]);
+    const ch = target[i].replace('&','&amp;').replace('<','&lt;');
+    html += `<span class="${ok?'hit':'miss'}">${ch}</span>`;
+  }
+  return html;
+}
 function store(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
 function load(key, fallback){ try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; } }
 
+/* ===================== RÉGLAGES UTILISATEUR ===================== */
+const SETTINGS_DEFAULTS = {rate:0.85, accents:false, hint:true};
+let SETTINGS = Object.assign({}, SETTINGS_DEFAULTS, load('orthovox_settings', {}));
+function saveSettings(){ store('orthovox_settings', SETTINGS); }
+
 /* ===================== SYNTHÈSE VOCALE ===================== */
 let frenchVoice = null;
+let voiceReady = false;
 function loadVoice(){
+  if(!('speechSynthesis' in window)) return;
   const voices = speechSynthesis.getVoices();
-  frenchVoice = voices.find(v=>v.lang === "fr-FR") || voices.find(v=>v.lang && v.lang.startsWith("fr")) || null;
+  if(voices.length){
+    frenchVoice = voices.find(v=>v.lang === "fr-FR") || voices.find(v=>v.lang && v.lang.startsWith("fr")) || null;
+    voiceReady = true;
+  }
 }
 if('speechSynthesis' in window){
   loadVoice();
   speechSynthesis.onvoiceschanged = loadVoice;
 }
 function speakWord(word, slow=false, btnEl=null){
-  if(!('speechSynthesis' in window)){
-    alert("La synthèse vocale n'est pas disponible sur ce navigateur.");
-    return;
+  if(!('speechSynthesis' in window)) return; // synthèse indisponible : on échoue en silence
+  // Les voix se chargent parfois de façon asynchrone : on réessaie une fois prêtes.
+  if(!voiceReady){
+    loadVoice();
+    if(!voiceReady){
+      const retry = ()=>{ speechSynthesis.removeEventListener('voiceschanged', retry); speakWord(word, slow, btnEl); };
+      speechSynthesis.addEventListener('voiceschanged', retry);
+      setTimeout(()=>{ voiceReady = true; }, 400); // repli : au pire on parle avec la voix par défaut
+      return;
+    }
   }
   speechSynthesis.cancel();
   const utter = new SpeechSynthesisUtterance(word);
   utter.lang = "fr-FR";
   if(frenchVoice) utter.voice = frenchVoice;
-  utter.rate = slow ? 0.55 : 0.85;
+  const base = SETTINGS.rate || 0.85;
+  utter.rate = slow ? Math.max(0.4, base - 0.3) : base;
   utter.pitch = 1;
   if(btnEl){
     utter.onstart = ()=> btnEl.classList.add('speaking');
@@ -448,20 +608,34 @@ function speakWord(word, slow=false, btnEl=null){
 }
 
 /* ===================== ONGLET NAVIGATION ===================== */
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click', ()=>{
-    const wasArcade = document.getElementById('screen-arcade').classList.contains('active');
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('screen-'+tab.dataset.tab).classList.add('active');
-    if(tab.dataset.tab === 'archive') renderArchive();
-    if(wasArcade && tab.dataset.tab !== 'arcade' && arcadeState.running){
-      clearInterval(arcadeState.tickTimer); // on quitte l'onglet en pleine partie : on met le minuteur en pause
-    }
-    if(tab.dataset.tab === 'arcade' && arcadeState.running && arcadeState.current){
-      nextArcadeRound(); // on relance le mot en cours avec un minuteur frais
-    }
+const tabEls = Array.from(document.querySelectorAll('.tab'));
+function activateTab(tab){
+  const wasArcade = document.getElementById('screen-arcade').classList.contains('active');
+  tabEls.forEach(t=>{
+    const on = t === tab;
+    t.classList.toggle('active', on);
+    t.setAttribute('aria-selected', on ? 'true' : 'false');
+    t.tabIndex = on ? 0 : -1;
+  });
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+tab.dataset.tab).classList.add('active');
+  if(tab.dataset.tab === 'archive') renderArchive();
+  if(wasArcade && tab.dataset.tab !== 'arcade' && arcadeState.running){
+    clearInterval(arcadeState.tickTimer); // on quitte l'onglet en pleine partie : on met le minuteur en pause
+  }
+  if(tab.dataset.tab === 'arcade' && arcadeState.running && arcadeState.current){
+    nextArcadeRound(); // on relance le mot en cours avec un minuteur frais
+  }
+}
+tabEls.forEach((tab, i)=>{
+  tab.addEventListener('click', ()=> activateTab(tab));
+  tab.addEventListener('keydown', e=>{
+    let target = null;
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown') target = tabEls[(i+1)%tabEls.length];
+    else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp') target = tabEls[(i-1+tabEls.length)%tabEls.length];
+    else if(e.key === 'Home') target = tabEls[0];
+    else if(e.key === 'End') target = tabEls[tabEls.length-1];
+    if(target){ e.preventDefault(); activateTab(target); target.focus(); }
   });
 });
 
@@ -495,22 +669,38 @@ function refreshDiffRow(container, activeKey, locked){
   });
 }
 
+function currentDefiWord(){ return defiState.words[defiState.index]; }
+
+/* Prépare l'affichage du mot courant : indice caché, bouton indice selon réglage. */
+function prepDefiWord(){
+  const w = currentDefiWord();
+  const def = document.getElementById('defiDef');
+  def.textContent = w && w.def ? w.def : '';
+  def.classList.add('hidden');
+  const hintBtn = document.getElementById('defiHint');
+  hintBtn.setAttribute('aria-expanded', 'false');
+  hintBtn.style.display = (SETTINGS.hint && w && w.def) ? '' : 'none';
+}
+
 function startDefi(diffKey){
-  const todaysDone = load('orthovox_defi_done_'+todayKey(), null);
   defiState.diff = diffKey;
   defiState.words = pickWords(diffKey, todayKey(), WORDS_PER_ROUND);
   defiState.index = 0;
   defiState.results = [];
-  refreshDiffRow(document.getElementById('defiDiffRow'), diffKey, true);
+  refreshDiffRow(document.getElementById('defiDiffRow'), diffKey, false); // difficulté librement modifiable
   document.getElementById('defiEnd').style.display = 'none';
   document.getElementById('defiPlay').style.display = 'block';
   renderDefiProgress();
-  document.getElementById('defiFeedback').textContent = '';
-  document.getElementById('defiFeedback').className = 'feedback';
-  document.getElementById('defiInput').value = '';
-  document.getElementById('defiInput').disabled = false;
+  const fb = document.getElementById('defiFeedback');
+  fb.textContent = '';
+  fb.className = 'feedback';
+  const input = document.getElementById('defiInput');
+  input.value = '';
+  input.disabled = false;
   document.getElementById('defiSubmit').disabled = false;
-  document.getElementById('defiInput').focus();
+  prepDefiWord();
+  input.focus();
+  speakWord(currentDefiWord().word, false, document.getElementById('defiSpeak')); // dictée automatique du 1er mot
 }
 
 function renderDefiProgress(){
@@ -528,31 +718,35 @@ function renderDefiProgress(){
 
 function submitDefi(){
   const input = document.getElementById('defiInput');
-  const val = normalize(input.value);
-  if(!val) return;
-  const word = defiState.words[defiState.index];
-  const correct = val === normalize(word);
-  defiState.results.push(correct);
+  const raw = input.value;
+  if(!normalize(raw)) return;
+  const word = currentDefiWord().word;
+  const res = checkWord(raw, word);
+  defiState.results.push(res.correct);
   const fb = document.getElementById('defiFeedback');
-  if(correct){
-    fb.textContent = 'Correct !';
+  let pause = 750;
+  if(res.correct){
+    fb.textContent = res.accentsOnly ? 'Correct ! (à l’accent près)' : 'Correct !';
     fb.className = 'feedback ok';
   } else {
-    fb.textContent = `Raté — c'était « ${word} »`;
+    fb.innerHTML = `Raté — le mot juste :<br><span class="reveal">${diffLetters(raw, word)}</span>`;
     fb.className = 'feedback ko';
     input.classList.add('shake');
     setTimeout(()=>input.classList.remove('shake'), 350);
+    pause = 1600; // laisser le temps de lire le mot corrigé
   }
   defiState.index++;
   input.value = '';
   renderDefiProgress();
   if(defiState.index >= defiState.words.length){
-    setTimeout(endDefi, 700);
+    setTimeout(endDefi, pause);
   } else {
     setTimeout(()=>{
       fb.textContent = '';
-      speakWord(defiState.words[defiState.index], false, document.getElementById('defiSpeak'));
-    }, 700);
+      fb.className = 'feedback';
+      prepDefiWord();
+      speakWord(currentDefiWord().word, false, document.getElementById('defiSpeak'));
+    }, pause);
   }
 }
 
@@ -591,14 +785,28 @@ document.getElementById('defiShare').addEventListener('click', ()=>{
   });
 });
 
-document.getElementById('defiSpeak').addEventListener('click', ()=>{
-  if(defiState.index < defiState.words.length) speakWord(defiState.words[defiState.index], false, document.getElementById('defiSpeak'));
-});
-document.getElementById('defiReplaySlow').addEventListener('click', ()=>{
-  if(defiState.index < defiState.words.length) speakWord(defiState.words[defiState.index], true, document.getElementById('defiSpeak'));
+function replayDefi(slow){
+  if(defiState.index < defiState.words.length) speakWord(currentDefiWord().word, slow, document.getElementById('defiSpeak'));
+}
+document.getElementById('defiSpeak').addEventListener('click', ()=> replayDefi(false));
+document.getElementById('defiReplaySlow').addEventListener('click', ()=> replayDefi(true));
+document.getElementById('defiHint').addEventListener('click', ()=>{
+  const def = document.getElementById('defiDef');
+  const shown = def.classList.toggle('hidden') === false;
+  document.getElementById('defiHint').setAttribute('aria-expanded', shown ? 'true' : 'false');
 });
 document.getElementById('defiSubmit').addEventListener('click', submitDefi);
 document.getElementById('defiInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') submitDefi(); });
+
+/* Raccourci clavier : Échap réécoute (Maj+Échap = lentement), quand le Défi est actif et en cours. */
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Escape') return;
+  const defiActive = document.getElementById('screen-defi').classList.contains('active');
+  const playing = document.getElementById('defiPlay').style.display !== 'none';
+  const settingsOpen = document.getElementById('settingsBackdrop').classList.contains('open');
+  if(settingsOpen){ closeSettings(); return; }
+  if(defiActive && playing){ e.preventDefault(); replayDefi(e.shiftKey); }
+});
 
 buildDiffRow(document.getElementById('defiDiffRow'), startDefi, ()=>defiState.diff);
 
@@ -637,9 +845,11 @@ function shuffledPool(diffKey){
 function renderArcadeLives(){
   const el = document.getElementById('arcadeLives');
   el.innerHTML = '';
+  el.setAttribute('aria-label', `${arcadeState.lives} vie${arcadeState.lives>1?'s':''} restante${arcadeState.lives>1?'s':''}`);
   for(let i=0;i<3;i++){
     const span = document.createElement('span');
     span.className = 'arcade-life' + (i >= arcadeState.lives ? ' lost' : '');
+    span.setAttribute('aria-hidden', 'true');
     span.textContent = '❤️';
     el.appendChild(span);
   }
@@ -687,6 +897,7 @@ function nextArcadeRound(){
   input.focus();
   const card = document.getElementById('arcadePlay');
   card.classList.remove('flash-ok','flash-ko');
+  document.getElementById('arcadeReveal').textContent = '';
   document.getElementById('arcadeTimerFill').classList.remove('low');
   document.getElementById('arcadeTimerFill').style.width = '100%';
   document.getElementById('arcadeSeconds').classList.remove('low');
@@ -719,10 +930,10 @@ function tickArcadeTimer(myRound){
 function submitArcade(){
   if(!arcadeState.running) return;
   const input = document.getElementById('arcadeInput');
-  const val = normalize(input.value);
-  if(!val) return;
-  const correct = val === normalize(arcadeState.current.word);
-  if(correct){
+  const raw = input.value;
+  if(!normalize(raw)) return;
+  const res = checkWord(raw, arcadeState.current.word);
+  if(res.correct){
     clearInterval(arcadeState.tickTimer);
     const remainingSecs = Math.max(0, Math.ceil((arcadeState.duration - (Date.now()-arcadeState.startTime))/1000));
     const lvl = LEVEL_META[arcadeState.levelIdx];
@@ -737,18 +948,22 @@ function submitArcade(){
     input.disabled = true;
     input.classList.add('shake');
     setTimeout(()=>input.classList.remove('shake'), 350);
-    loseArcadeLife(`Ce n'est pas ça — c'était « ${arcadeState.current.word} »`);
+    loseArcadeLife(`Ce n'est pas ça — c'était « ${arcadeState.current.word} »`, raw);
   }
 }
-function loseArcadeLife(msg){
+function loseArcadeLife(msg, userInput){
+  const word = arcadeState.current.word;
+  const reveal = document.getElementById('arcadeReveal');
+  // Montre le mot juste (surligné si l'utilisateur a saisi quelque chose) — invisible auparavant en cours de partie.
+  reveal.innerHTML = userInput ? diffLetters(userInput, word) : `<span class="miss">${word}</span>`;
   arcadeState.lives--;
   renderArcadeLives();
   document.getElementById('arcadePlay').classList.add('flash-ko');
   if(arcadeState.lives <= 0){
-    setTimeout(()=>endArcade(msg), 600);
+    setTimeout(()=>endArcade(msg), 1000);
   } else {
     arcadeState.poolIndex++;
-    setTimeout(nextArcadeRound, 900);
+    setTimeout(nextArcadeRound, 1500);
   }
 }
 function advanceArcadeLevel(){
@@ -792,6 +1007,44 @@ document.getElementById('arcadeReplayBtn').addEventListener('click', ()=>{
   if(arcadeState.running && arcadeState.current) speakWord(arcadeState.current.word, true, null);
 });
 
+/* ===================== RÉGLAGES (panneau) ===================== */
+const settingsBackdrop = document.getElementById('settingsBackdrop');
+let settingsLastFocus = null;
+function syncSettingsUI(){
+  document.getElementById('setRate').value = SETTINGS.rate;
+  document.getElementById('setRateVal').textContent = Number(SETTINGS.rate).toFixed(2);
+  document.getElementById('setAccents').checked = !!SETTINGS.accents;
+  document.getElementById('setHint').checked = !!SETTINGS.hint;
+}
+function openSettings(){
+  settingsLastFocus = document.activeElement;
+  syncSettingsUI();
+  settingsBackdrop.classList.add('open');
+  document.getElementById('settingsClose').focus();
+}
+function closeSettings(){
+  settingsBackdrop.classList.remove('open');
+  if(settingsLastFocus && settingsLastFocus.focus) settingsLastFocus.focus();
+}
+document.getElementById('settingsOpen').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+settingsBackdrop.addEventListener('click', e=>{ if(e.target === settingsBackdrop) closeSettings(); });
+document.getElementById('setRate').addEventListener('input', e=>{
+  SETTINGS.rate = parseFloat(e.target.value);
+  document.getElementById('setRateVal').textContent = SETTINGS.rate.toFixed(2);
+  saveSettings();
+});
+document.getElementById('setAccents').addEventListener('change', e=>{
+  SETTINGS.accents = e.target.checked; saveSettings();
+});
+document.getElementById('setHint').addEventListener('change', e=>{
+  SETTINGS.hint = e.target.checked; saveSettings();
+  // Reflète immédiatement la visibilité du bouton d'indice dans le Défi.
+  const hintBtn = document.getElementById('defiHint');
+  const w = currentDefiWord();
+  hintBtn.style.display = (SETTINGS.hint && w && w.def) ? '' : 'none';
+});
+
 /* ===================== CHARGEMENT DES DONNÉES ===================== */
 async function loadWordData(){
   try{
@@ -809,6 +1062,7 @@ async function loadWordData(){
 }
 function initApp(){
   document.getElementById('loadingOverlay').classList.add('hidden');
+  syncSettingsUI();
   const s = load('orthovox_streak', {count:0,last:null});
   document.getElementById('streakDisplay').textContent = `Série : ${s.count} jour${s.count>1?'s':''}`;
   startDefi('facile');
